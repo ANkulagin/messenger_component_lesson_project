@@ -1,23 +1,26 @@
 <?php
-// src/MessageHandler/ChatMessageHandler.php
+
 namespace App\MessageHandler;
 
-use App\Entity\ChatMessageEntity as ChatMessageEntity;
+use App\Entity\ChatMessageEntity;
 use App\Message\ChatMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Service\Command\SendNotificationsService;
 
 #[AsMessageHandler]
 class ChatMessageHandler
 {
     private HttpClientInterface $httpClient;
     private EntityManagerInterface $entityManager;
+    private SendNotificationsService $sendNotificationsService;
 
-    public function __construct(HttpClientInterface $httpClient, EntityManagerInterface $entityManager)
+    public function __construct(HttpClientInterface $httpClient, EntityManagerInterface $entityManager, SendNotificationsService $sendNotificationsService)
     {
         $this->httpClient = $httpClient;
         $this->entityManager = $entityManager;
+        $this->sendNotificationsService = $sendNotificationsService;
     }
 
     public function __invoke(ChatMessage $message)
@@ -26,17 +29,11 @@ class ChatMessageHandler
 
         try {
             if ($message->getStatus()) {
-                // Симулируем неудачу
-                 throw new \Exception('Simulated failure');
-
-                // Симулируем успешную отправку
-                $response = $this->httpClient->request('POST', 'https://httpbin.org/post', [
-                    'json' => ['message' => 'Hello, World!']
-                ]);
-
-                if ($response->getStatusCode() !== 200) {
-                    throw new \Exception('Failed to send message');
-                }
+                $newsItem = [
+                    'id' => 'example-id',
+                    'title' => 'Test Message',
+                ];
+                $this->sendNotificationsService->sendNotifications($newsItem, $this->httpClient);
 
                 // Отметка сообщения как отправленного
                 $chatMessage->markAsSent();
