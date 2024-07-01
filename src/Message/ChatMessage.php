@@ -9,27 +9,24 @@ namespace App\Message;
  */
 class ChatMessage
 {
-    private bool $status;
 
-    /**
-     * Конструктор сообщения.
-     *
-     * @param bool $status
-     */
-    public function __construct(bool $status)
+    public function __construct(
+        private readonly string $message,
+        private readonly string $author,
+    )
     {
-        $this->status = $status;
     }
 
-    /**
-     * Получить статус сообщения.
-     *
-     * @return bool
-     */
-    public function getStatus(): bool
+    public function getMessage(): string
     {
-        return $this->status;
+        return $this->message;
     }
+
+    public function getAuthor(): string
+    {
+        return $this->author;
+    }
+
 }
 
 

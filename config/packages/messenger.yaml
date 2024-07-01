@@ -1,17 +1,42 @@
 framework:
   messenger:
-    # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
-    # failure_transport: failed
-
+    # Определение различных транспортов (очередей сообщений)
     transports:
-      # https://symfony.com/doc/current/messenger.html#transport-configuration
-      async: '%env(MESSENGER_TRANSPORT_DSN)%'
-      # failed: 'doctrine://default?queue_name=failed'
-      # sync: 'sync://'
+      # Транспорт для основных сообщений, использующий Doctrine для хранения сообщений в базе данных
+      doctrine:
+        # DSN (Data Source Name) для подключения к базе данных, значение берется из переменной окружения
+        dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+        # Дополнительные параметры для транспорта
+        options:
+          # Имя таблицы, в которой будут храниться сообщения
+          table_name: messenger_messages
+        # Стратегия повторных попыток в случае неудачи
+        retry_strategy:
+          # Максимальное количество повторных попыток
+          max_retries: 3
+          # Задержка перед первой повторной попыткой (в миллисекундах)
+          delay: 1000
+          # Множитель для увеличения задержки с каждой попыткой (экспоненциальный рост)
+          multiplier: 2
+          # Максимальная задержка между повторными попытками (в миллисекундах)
+          max_delay: 30000
+      # Транспорт для хранения сообщений, которые не удалось обработать после всех попыток
+      failed:
+        # DSN для подключения к базе данных, используемой для хранения неудачных сообщений
+        dsn: 'doctrine://default?queue_name=failed'
+        # Дополнительные параметры для транспорта
+        options:
+          # Имя таблицы, в которой будут храниться неудачные сообщения
+          table_name: failed_messages
 
+    # Маршрутизация сообщений к соответствующим транспортам
     routing:
-      # Route your messages to the transports
-      'App\Message\ChatMessage': async
+      # Сообщения типа 'App\Message\ChatMessage' будут отправлены в транспорт 'doctrine'
+      'App\Message\ChatMessage': doctrine
+
+    # Указание транспорта для хранения сообщений, которые не удалось обработать
+    failure_transport: failed
+
 
 
 

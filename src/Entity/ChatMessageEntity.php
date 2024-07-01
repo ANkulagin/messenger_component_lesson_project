@@ -18,58 +18,66 @@ class ChatMessageEntity
     #[ORM\Column(type: 'integer')]
     private int $id;
 
-    #[ORM\Column(type: 'boolean')]
-    private bool $status;
+    #[ORM\Column(type: 'boolean', nullable: true, options: ['default' => false])]
+    private ?bool $active = false;
 
-    #[ORM\Column(type: 'boolean')]
-    private bool $sent = false;
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $products;
 
-    /**
-     * Конструктор сущности сообщения.
-     *
-     * @param bool $status
-     */
-    public function __construct(bool $status)
-    {
-        $this->status = $status;
-    }
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $title;
 
-    /**
-     * Получить ID сообщения.
-     *
-     * @return int|null
-     */
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $dateStart;
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Получить статус сообщения.
-     *
-     * @return bool
-     */
-    public function getStatus(): bool
+    public function isActive(): ?bool
     {
-        return $this->status;
+        return $this->active;
     }
 
-    /**
-     * Проверить, отправлено ли сообщение.
-     *
-     * @return bool
-     */
-    public function isSent(): bool
+    public function setActive(bool $active): static
     {
-        return $this->sent;
+        $this->active = $active;
+
+        return $this;
     }
 
-    /**
-     * Отметить сообщение как отправленное.
-     */
-    public function markAsSent(): void
+    public function getProducts(): ?array
     {
-        $this->sent = true;
+        return $this->products;
+    }
+
+    public function setProducts(?array $products): static
+    {
+        $this->products = $products;
+
+        return $this;
+    }
+
+    public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function setTitle(?string $title): static
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    public function getDateStart(): ?string
+    {
+        return $this->dateStart;
+    }
+
+    public function setDateStart( $dateStart): void
+    {
+        $this->dateStart = $dateStart;
     }
 }
 

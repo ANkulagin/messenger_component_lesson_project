@@ -4,36 +4,48 @@ namespace App\Controller;
 
 use App\Entity\ChatMessageEntity;
 use App\Message\ChatMessage;
+use App\Repository\ChatMessageRepository;
+use App\Service\SendNotificationsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Constraints\DateTime;
 
 class ChatController extends AbstractController
 {
-    private EntityManagerInterface $entityManager;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ChatMessageRepository $chatMessageRepository,
+        private readonly SendNotificationsService $sendNotificationsService,
+    )
     {
-        $this->entityManager = $entityManager;
+
     }
 
     #[Route('/send', name: 'send_message')]
-    public function send(Request $request, MessageBusInterface $bus): Response
+    public function send(Request $request): Response
     {
-        if ($request->isMethod('POST')) {
-            $status = $request->request->get('status') === 'true';
-            $bus->dispatch(new ChatMessage($status));
-            return $this->redirectToRoute('send_message');
+        $isPublish = $request->get('publish') !== null;
+
+        $chatMessage = $this->chatMessageRepository->find(1);
+
+        // Если запись найдена, обновляем поле active
+        if ($chatMessage) {
+            $chatMessage->setActive($isPublish);
+            $this->entityManager->flush();
         }
 
-        // Получаем все сообщения из базы данных
-        $messages = $this->entityManager->getRepository(ChatMessageEntity::class)->findAll();
+        if ($chatMessage->isActive() === true){
+            $this->sendNotificationsService->sendNotifications($chatMessage);
+        }
 
         return $this->render('chat/send.html.twig', [
-            'messages' => $messages,
+            'publish' => $request->get('publish'),
+            'chatMessage' => $chatMessage // Передача найденной записи в шаблон, если нужно
         ]);
     }
 }

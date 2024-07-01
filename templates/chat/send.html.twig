@@ -1,11 +1,12 @@
-<form method="post">
-    <input type="hidden" name="status" value="true">
-    <button type="submit">Send Message</button>
+<form  method="post">
+    {# Чекбокс #}
+    <div>
+        <label for="publish">Активная Статья:</label>
+        <input type="checkbox" id="publish" name="publish" value="true">
+    </div>
+    {# Кнопка опубликовать #}
+    <div>
+        <button type="submit">Опубликовать</button>
+    </div>
 </form>
 
-<h2>Messages:</h2>
-<ul>
-    {% for message in messages %}
-        <li>{{ message.id }} - {{ message.status ? 'True' : 'False' }} - {{ message.sent ? 'Sent' : 'Not Sent' }}</li>
-    {% endfor %}
-</ul>

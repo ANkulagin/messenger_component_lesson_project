@@ -2,51 +2,62 @@
 
 namespace App\MessageHandler;
 
-use App\Entity\ChatMessageEntity;
 use App\Message\ChatMessage;
-use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use App\Service\Command\SendNotificationsService;
 
 #[AsMessageHandler]
 class ChatMessageHandler
 {
     private HttpClientInterface $httpClient;
-    private EntityManagerInterface $entityManager;
-    private SendNotificationsService $sendNotificationsService;
 
-    public function __construct(HttpClientInterface $httpClient, EntityManagerInterface $entityManager, SendNotificationsService $sendNotificationsService)
+    public function __construct(HttpClientInterface $httpClient)
     {
         $this->httpClient = $httpClient;
-        $this->entityManager = $entityManager;
-        $this->sendNotificationsService = $sendNotificationsService;
     }
 
     public function __invoke(ChatMessage $message)
     {
-        $chatMessage = new ChatMessageEntity($message->getStatus());
-
         try {
-            if ($message->getStatus()) {
-                $newsItem = [
-                    'id' => 'example-id',
-                    'title' => 'Test Message',
-                ];
-                $this->sendNotificationsService->sendNotifications($newsItem, $this->httpClient);
-
-                // Отметка сообщения как отправленного
-                $chatMessage->markAsSent();
-            }
-        } catch (\Exception $e) {
-            // Сохранение сообщения в базе данных в случае неудачи
-            $this->entityManager->persist($chatMessage);
-            $this->entityManager->flush();
-            throw $e; // Бросаем исключение, чтобы сообщение оставалось в очереди
+            // GET запрос
+            //Расскоментировать для симуляции ошибки
+            //throw new \Exception('Simulated failure');
+            $response = $this->httpClient->request('GET', 'https://Текст скрыт так как предоставляет конфиденциальную информацию/api/v4/users/email/' . $message->getAuthor(), [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer Текст скрыт так как предоставляет конфиденциальную информацию',
+                ],
+            ]);
+            $userData = $response->toArray();
+            $userId = $userData['id'];
+            // POST запрос
+            $response = $this->httpClient->request('POST', 'https://Текст скрыт так как предоставляет конфиденциальную информацию/api/v4/channels/direct', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer Текст скрыт так как предоставляет конфиденциальную информацию',
+                ],
+                'json' => [
+                    $userId,
+                    'Текст скрыт так как предоставляет конфиденциальную информацию',
+                ],
+            ]);
+            $userData = $response->toArray();
+            $channelId = $userData['id'];
+            // POST запрос
+            $this->httpClient->request('POST', 'https://Текст скрыт так как предоставляет конфиденциальную информацию/api/v4/posts', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer Текст скрыт так как предоставляет конфиденциальную информацию',
+                ],
+                'json' => [
+                    'channel_id' => $channelId,
+                    'message' => $message->getMessage(),
+                ],
+            ]);
+        } catch (Exception $e) {
+            throw $e; // Чтобы сообщение осталось в базе данных
         }
-
-        // Сохранение сообщения в базе данных в случае успеха
-        $this->entityManager->persist($chatMessage);
-        $this->entityManager->flush();
     }
 }
